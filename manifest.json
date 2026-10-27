@@ -1,14 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Dante Plus",
-  "version": "1.0",
-  "description": "",
+  "version": "2.0",
+  "description": "Rozwiązuje zadania z AI i wkleja pliki.",
   "permissions": [
-    "clipboardRead"
+    "clipboardRead",
+    "clipboardWrite",
+    "activeTab",
+    "scripting",
+    "tabs"
   ],
+  "action": {
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
-      "matches": ["https://dante.iis.p.lodz.pl//*"],
+      "matches": ["https://*/*"],
       "js": ["content.js"]
     }
   ]
