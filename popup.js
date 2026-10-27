@@ -2,9 +2,10 @@ document.getElementById('solve-btn').addEventListener('click', async () => {
     const aiChoice = document.getElementById('ai-choice').value;
 
     const urls = {
-        'chatgpt': 'https://chatgpt.com/',
+        'gemini': 'https://gemini.google.com/app',
         'claude': 'https://claude.ai/new',
-        'gemini': 'https://gemini.google.com/app'
+        'chatgpt': 'https://chatgpt.com/'
+
     };
 
     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -12,13 +13,20 @@ document.getElementById('solve-btn').addEventListener('click', async () => {
 
     chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        function: extractAndCopyTask
-    }, () => {
-        chrome.tabs.create({ url: urls[aiChoice] });
+        function: extractTaskText
+    }, (results) => {
+        if (results && results[0] && results[0].result) {
+            const finalPrompt = results[0].result;
+
+            // Zapisujemy prompt w pamięci przeglądarki i otwieramy AI
+            chrome.storage.local.set({ autoPrompt: finalPrompt }, () => {
+                chrome.tabs.create({ url: urls[aiChoice] });
+            });
+        }
     });
 });
 
-function extractAndCopyTask() {
+function extractTaskText() {
     let textToCopy = "";
     const selection = window.getSelection().toString();
 
@@ -33,7 +41,7 @@ function extractAndCopyTask() {
         }
     }
 
-    const finalPrompt = "Rozwiąż to zadanie z programowania (napisz kod w C/C++). Oto treść:\n\n" + textToCopy;
+    const finalPrompt = "Rozwiąż to zadanie z programowania (napisz kod w C). Oto treść:\n\n" + textToCopy;
 
     const textArea = document.createElement("textarea");
     textArea.value = finalPrompt;
@@ -41,4 +49,6 @@ function extractAndCopyTask() {
     textArea.select();
     document.execCommand("copy");
     document.body.removeChild(textArea);
+
+    return finalPrompt;
 }
