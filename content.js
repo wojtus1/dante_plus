@@ -1,51 +1,50 @@
-document.addEventListener('paste', async function(event) {
-    const files = (event.clipboardData || window.clipboardData).files;
+window.addEventListener('paste', async function(event) {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
 
-    if (!files || files.length === 0) {
-        console.log("Brak plików w schowku (upewnij się, że kopiujesz plik z drzewa projektu CLion, a nie sam tekst).");
-        return;
+    const pastedFiles = clipboardData.files;
+    const pastedText = clipboardData.getData('text');
+
+    if ((!pastedFiles || pastedFiles.length === 0) && (!pastedText || pastedText.trim().length === 0)) return;
+
+    const dataTransfer = new DataTransfer();
+    let hasFiles = false;
+
+    if (pastedFiles && pastedFiles.length > 0) {
+        for (let i = 0; i < pastedFiles.length; i++) {
+            dataTransfer.items.add(pastedFiles[i]);
+        }
+        hasFiles = true;
+    }
+    else if (pastedText && pastedText.trim().length > 0) {
+        const file = new File([pastedText], "main.c", {
+            type: "text/plain",
+            lastModified: Date.now()
+        });
+        dataTransfer.items.add(file);
+        hasFiles = true;
+        event.preventDefault();
     }
 
-    console.log("Wykryto pliki w schowku! Ilość:", files.length);
+    if (!hasFiles) return;
 
     const tabs = document.querySelectorAll('a.nav-link');
-    let plikiTab = null;
     for (let tab of tabs) {
         if (tab.textContent.includes('Pliki')) {
-            plikiTab = tab;
+            tab.click();
             break;
         }
     }
 
-    if (plikiTab) {
-        console.log("Znaleziono zakładkę 'Pliki', klikam...");
-        plikiTab.click();
-
-        await new Promise(resolve => setTimeout(resolve, 300));
+    let fileInput = null;
+    for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) break;
     }
-
-    const fileInput = document.querySelector('input[type="file"]');
 
     if (fileInput) {
-        const dataTransfer = new DataTransfer();
-        for (let i = 0; i < files.length; i++) {
-            dataTransfer.items.add(files[i]);
-        }
-
         fileInput.files = dataTransfer.files;
-
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        console.log("Sukces: Pliki zostały automatycznie załadowane!");
-    } else {
-        console.warn("Nie znaleziono pola <input type='file'>. Próba awaryjnego upuszczenia (drop).");
-
-        const dropEvent = new DragEvent('drop', {
-            bubbles: true,
-            cancelable: true,
-            dataTransfer: event.clipboardData
-        });
-
-        const container = document.querySelector('.tab-content') || document.body;
-        container.dispatchEvent(dropEvent);
     }
-});
+}, { capture: true });
