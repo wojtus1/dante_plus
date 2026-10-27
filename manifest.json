@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Dante Plus",
+  "version": "1.0",
+  "description": "",
+  "permissions": [
+    "clipboardRead"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://dante.iis.p.lodz.pl//*"],
+      "js": ["content.js"]
+    }
+  ]
+}
